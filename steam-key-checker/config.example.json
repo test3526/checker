@@ -1,4 +1,9 @@
 {
   "sessionid": "TUTAJ_WKLEJ_SESSIONID",
-  "steamLoginSecure": "TUTAJ_WKLEJ_STEAMLOGINSECURE"
+  "steamLoginSecure": "TUTAJ_WKLEJ_STEAMLOGINSECURE",
+  "settings": {
+    "_komentarz": "delayBetweenKeys w ms. Bezpiecznie: 5000. Szybciej: 3000. Ponizej 3000 ryzykujesz blokade aktywacji na ~1h.",
+    "delayBetweenKeys": 5000,
+    "autoConfirm": false
+  }
 }

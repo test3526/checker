@@ -26,13 +26,15 @@ const colors = {
     bold: (text) => `\x1b[1m${text}\x1b[0m`,
 };
 
-// ============ KONFIGURACJA ============
+// ============ KONFIGURACJA (wartosci domyslne) ============
+// Mozna je nadpisac w config.json w sekcji "settings"
 const CONFIG = {
     // Opoznienie miedzy requestami (ms) - chroni przed banem IP
     delayBetweenKeys: 5000,       // 5 sekund miedzy kluczami
-    delayOnRateLimit: 60000,      // 60 sekund jesli rate limit
+    delayOnRateLimit: 3600000,    // 60 minut jesli rate limit (Steam blokuje na ~1h!)
     maxRetries: 3,                 // max prob na klucz
     retryDelay: 10000,             // 10 sek miedzy probami
+    autoConfirm: false,            // true = nie pyta o potwierdzenie
     keysFile: 'keys.txt',
     resultsFile: 'results.txt',
     configFile: 'config.json',
@@ -61,6 +63,11 @@ function loadConfig() {
         const defaultConfig = {
             sessionid: "TUTAJ_WKLEJ_SESSIONID",
             steamLoginSecure: "TUTAJ_WKLEJ_STEAMLOGINSECURE",
+            settings: {
+                _komentarz: "Ustaw delayBetweenKeys nizej dla szybszego sprawdzania (ms). UWAGA: ponizej 3000 ryzykujesz blokade na ~1h!",
+                delayBetweenKeys: 5000,
+                autoConfirm: false
+            }
         };
         fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), 'utf8');
         console.log(colors.yellow('\n[!] Utworzono plik config.json - uzupelnij dane logowania!'));
@@ -74,7 +81,18 @@ function loadConfig() {
     }
     try {
         const data = fs.readFileSync(configPath, 'utf8');
-        return JSON.parse(data);
+        const config = JSON.parse(data);
+
+        // Nadpisz domyslne ustawienia tym co jest w config.json -> settings
+        if (config.settings) {
+            if (typeof config.settings.delayBetweenKeys === 'number') {
+                CONFIG.delayBetweenKeys = config.settings.delayBetweenKeys;
+            }
+            if (typeof config.settings.autoConfirm === 'boolean') {
+                CONFIG.autoConfirm = config.settings.autoConfirm;
+            }
+        }
+        return config;
     } catch (e) {
         console.log(colors.red('[BLAD] Nie mozna odczytac config.json: ' + e.message));
         return null;
@@ -298,18 +316,25 @@ async function main() {
 
     console.log(colors.cyan(`Znaleziono ${keys.length} kluczy do sprawdzenia.`));
     console.log(colors.gray(`Opoznienie miedzy kluczami: ${CONFIG.delayBetweenKeys / 1000}s`));
+    if (CONFIG.delayBetweenKeys < 3000) {
+        console.log(colors.red('[!] UWAGA: tempo ponizej 3s grozi blokada aktywacji na ~1h!'));
+    }
+    const szacowanyCzas = Math.ceil((keys.length * CONFIG.delayBetweenKeys) / 1000);
+    console.log(colors.gray(`Szacowany czas: ~${Math.floor(szacowanyCzas / 60)}min ${szacowanyCzas % 60}s`));
     console.log('');
 
-    // Potwierdzenie
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise(resolve => {
-        rl.question(colors.yellow('Rozpoczac sprawdzanie? (t/n): '), resolve);
-    });
-    rl.close();
+    // Potwierdzenie (mozna pominac ustawiajac autoConfirm: true w config.json)
+    if (!CONFIG.autoConfirm) {
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        const answer = await new Promise(resolve => {
+            rl.question(colors.yellow('Rozpoczac sprawdzanie? (t/n): '), resolve);
+        });
+        rl.close();
 
-    if (answer.toLowerCase() !== 't' && answer.toLowerCase() !== 'y') {
-        console.log(colors.gray('Anulowano.'));
-        process.exit(0);
+        if (answer.toLowerCase() !== 't' && answer.toLowerCase() !== 'y') {
+            console.log(colors.gray('Anulowano.'));
+            process.exit(0);
+        }
     }
 
     console.log('');
