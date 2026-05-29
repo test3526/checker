@@ -1,0 +1,4 @@
+# Wpisz klucze Steam ponizej (jeden na linie)
+# Linie zaczynajace sie od # sa ignorowane
+# Format: XXXXX-XXXXX-XXXXX
+

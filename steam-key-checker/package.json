@@ -1,0 +1,17 @@
+{
+  "name": "steam-key-checker",
+  "version": "1.0.0",
+  "description": "Hurtowy checker kluczy Steam - kolorowe wyniki w konsoli, rate limiting, zero zaleznosci npm",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "steam",
+    "key",
+    "checker"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
